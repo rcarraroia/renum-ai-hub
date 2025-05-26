@@ -18,6 +18,8 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
+    console.log('Iniciando criação de usuários...')
+
     // Criar o superadmin
     const { data: adminData, error: adminError } = await supabaseAdmin.auth.admin.createUser({
       email: 'admin@renatocarraro.com.br',
@@ -35,11 +37,17 @@ serve(async (req) => {
       
       // Atribuir role de superadmin
       if (adminData.user) {
-        await supabaseAdmin
+        const { error: roleError } = await supabaseAdmin
           .from('user_roles')
           .upsert([
             { user_id: adminData.user.id, role: 'superadmin' }
           ])
+        
+        if (roleError) {
+          console.error('Erro ao atribuir role de superadmin:', roleError)
+        } else {
+          console.log('Role de superadmin atribuída com sucesso')
+        }
       }
     }
 
@@ -59,9 +67,83 @@ serve(async (req) => {
       console.log('Colaborador criado:', userUser.user?.email)
     }
 
+    // Criar alguns dados de exemplo para o admin
+    if (adminData.user && !adminError) {
+      console.log('Criando dados de exemplo para o admin...')
+      
+      // Criar agentes de exemplo
+      const agentsData = [
+        {
+          user_id: adminData.user.id,
+          name: 'Product Owner IA',
+          type: 'Product Owner',
+          status: 'online',
+          description: 'Especialista em definição de produtos e requisitos',
+          tasks_count: 5
+        },
+        {
+          user_id: adminData.user.id,
+          name: 'Desenvolvedor Full Stack',
+          type: 'Developer',
+          status: 'busy',
+          description: 'Desenvolvedor especializado em React e Node.js',
+          tasks_count: 3
+        },
+        {
+          user_id: adminData.user.id,
+          name: 'QA Automation',
+          type: 'QA',
+          status: 'offline',
+          description: 'Especialista em testes automatizados',
+          tasks_count: 2
+        }
+      ]
+
+      const { error: agentsError } = await supabaseAdmin
+        .from('agents')
+        .insert(agentsData)
+
+      if (agentsError) {
+        console.error('Erro ao criar agentes:', agentsError)
+      } else {
+        console.log('Agentes de exemplo criados com sucesso')
+      }
+
+      // Criar projetos de exemplo
+      const projectsData = [
+        {
+          user_id: adminData.user.id,
+          name: 'Sistema de E-commerce',
+          description: 'Desenvolvimento de plataforma de vendas online',
+          status: 'em_andamento',
+          progress: 65,
+          agents_count: 3
+        },
+        {
+          user_id: adminData.user.id,
+          name: 'App Mobile Financeiro',
+          description: 'Aplicativo para gestão financeira pessoal',
+          status: 'em_revisao',
+          progress: 80,
+          agents_count: 2
+        }
+      ]
+
+      const { error: projectsError } = await supabaseAdmin
+        .from('projects')
+        .insert(projectsData)
+
+      if (projectsError) {
+        console.error('Erro ao criar projetos:', projectsError)
+      } else {
+        console.log('Projetos de exemplo criados com sucesso')
+      }
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
+        message: 'Usuários e dados de exemplo criados com sucesso',
         admin: adminData?.user?.email,
         user: userUser?.user?.email
       }),
