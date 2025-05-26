@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Bot, Mail, Lock, Loader2 } from 'lucide-react'
+import { Bot, Mail, Lock, Loader2, AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 
@@ -13,7 +13,7 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const { signIn } = useAuth()
+  const { signIn, isConfigured } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
 
@@ -26,7 +26,7 @@ export default function Login() {
     if (error) {
       toast({
         title: "Erro no login",
-        description: "Email ou senha inválidos.",
+        description: error.message || "Email ou senha inválidos.",
         variant: "destructive",
       })
     } else {
@@ -57,6 +57,15 @@ export default function Login() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {!isConfigured && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <p className="text-sm text-yellow-800">
+                Configure o Supabase para habilitar a autenticação
+              </p>
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -70,6 +79,7 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
                   required
+                  disabled={!isConfigured}
                 />
               </div>
             </div>
@@ -85,13 +95,14 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
                   required
+                  disabled={!isConfigured}
                 />
               </div>
             </div>
             <Button 
               type="submit" 
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-              disabled={isLoading}
+              disabled={isLoading || !isConfigured}
             >
               {isLoading ? (
                 <>
@@ -106,7 +117,11 @@ export default function Login() {
           <div className="mt-6 text-center space-y-2">
             <Link
               to="/reset-password"
-              className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+              className={`text-sm hover:underline ${
+                isConfigured 
+                  ? 'text-blue-600 hover:text-blue-800' 
+                  : 'text-gray-400 pointer-events-none'
+              }`}
             >
               Esqueceu sua senha?
             </Link>
@@ -114,7 +129,11 @@ export default function Login() {
               Não tem uma conta?{' '}
               <Link
                 to="/register"
-                className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                className={`hover:underline font-medium ${
+                  isConfigured 
+                    ? 'text-blue-600 hover:text-blue-800' 
+                    : 'text-gray-400 pointer-events-none'
+                }`}
               >
                 Cadastre-se
               </Link>

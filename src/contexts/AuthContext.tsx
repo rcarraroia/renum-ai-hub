@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 interface AuthContextType {
   user: User | null
@@ -11,6 +11,7 @@ interface AuthContextType {
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ error: any }>
   loading: boolean
+  isConfigured: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -21,6 +22,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setLoading(false)
+      return
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
@@ -41,6 +47,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string) => {
+    if (!isSupabaseConfigured) {
+      return { error: { message: 'Por favor, configure o Supabase primeiro' } }
+    }
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -49,6 +58,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string) => {
+    if (!isSupabaseConfigured) {
+      return { error: { message: 'Por favor, configure o Supabase primeiro' } }
+    }
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -57,10 +69,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
+    if (!isSupabaseConfigured) return
     await supabase.auth.signOut()
   }
 
   const resetPassword = async (email: string) => {
+    if (!isSupabaseConfigured) {
+      return { error: { message: 'Por favor, configure o Supabase primeiro' } }
+    }
     const { error } = await supabase.auth.resetPasswordForEmail(email)
     return { error }
   }
@@ -73,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
     resetPassword,
     loading,
+    isConfigured: isSupabaseConfigured,
   }
 
   return (

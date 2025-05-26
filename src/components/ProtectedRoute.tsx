@@ -2,13 +2,18 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
+import { SupabaseConfigWarning } from './SupabaseConfigWarning'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, loading } = useAuth()
+  const { user, loading, isConfigured } = useAuth()
+
+  if (!isConfigured) {
+    return <SupabaseConfigWarning />
+  }
 
   if (loading) {
     return (
