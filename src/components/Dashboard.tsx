@@ -10,9 +10,16 @@ import { RecentActivity } from "@/components/RecentActivity";
 import { AgentsOverview } from "@/components/AgentsOverview";
 import { ProjectsOverview } from "@/components/ProjectsOverview";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAgents } from "@/hooks/useAgents";
+import { useProjects } from "@/hooks/useProjects";
 
 export function Dashboard() {
   const { user } = useAuth();
+  const { agents } = useAgents();
+  const { projects } = useProjects();
+
+  const activeProjects = projects.filter(p => p.status === 'em_andamento' || p.status === 'em_revisao');
+  const onlineAgents = agents.filter(a => a.status === 'online');
 
   return (
     <div className="p-6 space-y-6">
@@ -50,10 +57,16 @@ export function Dashboard() {
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">
-                Comece a criar seus agentes de IA
+                {agents.length === 0 && projects.length === 0 
+                  ? "Comece a criar seus agentes de IA"
+                  : "Continue gerenciando seus projetos e agentes"
+                }
               </h2>
               <p className="text-gray-600 mt-1">
-                Use o Renum para criar agentes especializados: Product Owner, Desenvolvedor Full Stack, QA, DevOps e muito mais.
+                {agents.length === 0 && projects.length === 0 
+                  ? "Use o Renum para criar agentes especializados: Product Owner, Desenvolvedor Full Stack, QA, DevOps e muito mais."
+                  : `Você tem ${agents.length} agentes e ${projects.length} projetos ativos.`
+                }
               </p>
             </div>
           </div>
@@ -70,10 +83,10 @@ export function Dashboard() {
             <Bot className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">0</div>
+            <div className="text-2xl font-bold text-gray-900">{agents.length}</div>
             <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
               <Clock className="h-3 w-3" />
-              Nenhum agente criado ainda
+              {onlineAgents.length} online agora
             </p>
             <Button size="sm" className="mt-3 w-full" variant="outline">
               Ver Todos os Agentes
@@ -89,10 +102,10 @@ export function Dashboard() {
             <FolderOpen className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">0</div>
+            <div className="text-2xl font-bold text-gray-900">{activeProjects.length}</div>
             <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
               <Clock className="h-3 w-3" />
-              Nenhum projeto iniciado
+              {projects.length} total de projetos
             </p>
             <Button size="sm" className="mt-3 w-full" variant="outline">
               Ver Todos os Projetos
@@ -108,10 +121,10 @@ export function Dashboard() {
             <Activity className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">0</div>
+            <div className="text-2xl font-bold text-gray-900">{agents.length + projects.length}</div>
             <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
               <Clock className="h-3 w-3" />
-              Nenhuma atividade registrada
+              Total de itens criados
             </p>
           </CardContent>
         </Card>
