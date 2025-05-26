@@ -1,23 +1,15 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = 'https://wvplmbsfxsqfxupeucsd.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2cGxtYnNmeHNxZnh1cGV1Y3NkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyODU5ODUsImV4cCI6MjA2Mzg2MTk4NX0.Ia6qOdYAvQ4omzvFsLWW3xKN5bYe6IYLvucYhNphSXk'
 
-// Create a mock client when environment variables are missing
-const createMockClient = () => ({
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
-    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-    signInWithPassword: () => Promise.resolve({ error: { message: 'Supabase not configured' } }),
-    signUp: () => Promise.resolve({ error: { message: 'Supabase not configured' } }),
-    signOut: () => Promise.resolve({ error: null }),
-    resetPasswordForEmail: () => Promise.resolve({ error: { message: 'Supabase not configured' } }),
+    storage: localStorage,
+    persistSession: true,
+    autoRefreshToken: true,
   }
 })
 
-export const supabase = (!supabaseUrl || !supabaseAnonKey) 
-  ? createMockClient() 
-  : createClient(supabaseUrl, supabaseAnonKey)
-
-export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey)
+export const isSupabaseConfigured = true

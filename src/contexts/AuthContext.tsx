@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   signIn: (email: string, password: string) => Promise<{ error: any }>
-  signUp: (email: string, password: string) => Promise<{ error: any }>
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ error: any }>
   loading: boolean
@@ -27,17 +27,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Set up auth state listener first
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event, session?.user?.email)
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Then get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session?.user?.email)
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
@@ -50,35 +52,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!isSupabaseConfigured) {
       return { error: { message: 'Por favor, configure o Supabase primeiro' } }
     }
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    return { error }
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      return { error }
+    } catch (error) {
+      console.error('Sign in error:', error)
+      return { error }
+    }
   }
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, fullName?: string) => {
     if (!isSupabaseConfigured) {
       return { error: { message: 'Por favor, configure o Supabase primeiro' } }
     }
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-    return { error }
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          }
+        }
+      })
+      return { error }
+    } catch (error) {
+      console.error('Sign up error:', error)
+      return { error }
+    }
   }
 
   const signOut = async () => {
     if (!isSupabaseConfigured) return
-    await supabase.auth.signOut()
+    
+    try {
+      await supabase.auth.signOut()
+    } catch (error) {
+      console.error('Sign out error:', error)
+    }
   }
 
   const resetPassword = async (email: string) => {
     if (!isSupabaseConfigured) {
       return { error: { message: 'Por favor, configure o Supabase primeiro' } }
     }
-    const { error } = await supabase.auth.resetPasswordForEmail(email)
-    return { error }
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email)
+      return { error }
+    } catch (error) {
+      console.error('Reset password error:', error)
+      return { error }
+    }
   }
 
   const value = {

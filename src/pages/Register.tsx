@@ -5,16 +5,17 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Bot, Mail, Lock, Loader2 } from 'lucide-react'
+import { Bot, Mail, Lock, User, Loader2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 
 export default function Register() {
+  const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const { signUp } = useAuth()
+  const { signUp, isConfigured } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
 
@@ -39,9 +40,18 @@ export default function Register() {
       return
     }
 
+    if (!fullName.trim()) {
+      toast({
+        title: "Erro de validação",
+        description: "Por favor, informe seu nome completo.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
 
-    const { error } = await signUp(email, password)
+    const { error } = await signUp(email, password, fullName)
 
     if (error) {
       toast({
@@ -52,7 +62,7 @@ export default function Register() {
     } else {
       toast({
         title: "Cadastro realizado com sucesso!",
-        description: "Verifique seu email para confirmar a conta.",
+        description: "Você pode fazer login agora.",
       })
       navigate('/login')
     }
@@ -79,6 +89,22 @@ export default function Register() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="fullName">Nome Completo</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="Seu nome completo"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="pl-10"
+                  required
+                  disabled={!isConfigured}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -90,6 +116,7 @@ export default function Register() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
                   required
+                  disabled={!isConfigured}
                 />
               </div>
             </div>
@@ -106,6 +133,7 @@ export default function Register() {
                   className="pl-10"
                   required
                   minLength={6}
+                  disabled={!isConfigured}
                 />
               </div>
             </div>
@@ -122,13 +150,14 @@ export default function Register() {
                   className="pl-10"
                   required
                   minLength={6}
+                  disabled={!isConfigured}
                 />
               </div>
             </div>
             <Button 
               type="submit" 
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-              disabled={isLoading}
+              disabled={isLoading || !isConfigured}
             >
               {isLoading ? (
                 <>
@@ -145,7 +174,11 @@ export default function Register() {
               Já tem uma conta?{' '}
               <Link
                 to="/login"
-                className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                className={`hover:underline font-medium ${
+                  isConfigured 
+                    ? 'text-blue-600 hover:text-blue-800' 
+                    : 'text-gray-400 pointer-events-none'
+                }`}
               >
                 Faça login
               </Link>
