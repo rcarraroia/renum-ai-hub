@@ -9,9 +9,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
-  SidebarTrigger,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Bot, Home, Settings, FolderOpen, Activity } from "lucide-react";
+import { Bot, Home, Settings, FolderOpen, Activity, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const menuItems = [
   {
@@ -43,6 +45,17 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
+  const { signOut, user } = useAuth();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Logout realizado",
+      description: "Você foi desconectado com sucesso.",
+    });
+  };
+
   return (
     <Sidebar className="border-r border-blue-100">
       <SidebarHeader className="border-b border-blue-100 p-6">
@@ -57,6 +70,12 @@ export function AppSidebar() {
             <p className="text-xs text-gray-500">Hub de Agentes IA</p>
           </div>
         </div>
+        {user && (
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <p className="text-sm font-medium text-gray-900">Olá!</p>
+            <p className="text-xs text-gray-600 truncate">{user.email}</p>
+          </div>
+        )}
       </SidebarHeader>
       <SidebarContent className="p-4">
         <SidebarGroup>
@@ -82,6 +101,15 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="p-4 border-t border-blue-100">
+        <SidebarMenuButton
+          onClick={handleSignOut}
+          className="w-full justify-start hover:bg-red-50 hover:text-red-700 transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Sair</span>
+        </SidebarMenuButton>
+      </SidebarFooter>
     </Sidebar>
   );
 }
