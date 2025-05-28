@@ -1,18 +1,14 @@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CodeProject } from "./CodeProjectList";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,213 +23,254 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
-const codeProjectFormSchema = z.object({
-  name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
-  description: z.string().min(10, "A descrição deve ter pelo menos 10 caracteres"),
-  language: z.enum(["javascript", "typescript", "python", "java", "csharp", "other"]),
+const projectFormSchema = z.object({
+  title: z.string().min(3, {
+    message: "O título deve ter pelo menos 3 caracteres",
+  }),
+  description: z.string().min(10, {
+    message: "A descrição deve ter pelo menos 10 caracteres",
+  }),
+  language: z.enum(["javascript", "typescript", "python", "java", "csharp", "php", "ruby", "go", "rust", "other"]),
   type: z.enum(["component", "utility", "test", "boilerplate", "other"]),
-  generationType: z.enum(["from_scratch", "from_description", "from_example"]),
-  prompt: z.string().min(10, "A descrição deve ter pelo menos 10 caracteres"),
+  method: z.enum(["scratch", "description", "example"]),
 });
 
-type CodeProjectFormValues = z.infer<typeof codeProjectFormSchema>;
+type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
-interface CodeProjectFormProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (values: CodeProjectFormValues) => void;
-  isLoading?: boolean;
+interface ProjectFormProps {
+  defaultValues?: Partial<ProjectFormValues>;
+  onSubmit: (values: ProjectFormValues) => Promise<void>;
+  onCancel: () => void;
 }
 
 export function CodeProjectForm({
-  open,
-  onOpenChange,
+  defaultValues,
   onSubmit,
-  isLoading = false,
-}: CodeProjectFormProps) {
-  const form = useForm<CodeProjectFormValues>({
-    resolver: zodResolver(codeProjectFormSchema),
+  onCancel,
+}: ProjectFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [generationMethod, setGenerationMethod] = useState(defaultValues?.method || "description");
+
+  const form = useForm<ProjectFormValues>({
+    resolver: zodResolver(projectFormSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      language: "javascript",
-      type: "component",
-      generationType: "from_description",
-      prompt: "",
+      title: defaultValues?.title || "",
+      description: defaultValues?.description || "",
+      language: defaultValues?.language || "typescript",
+      type: defaultValues?.type || "component",
+      method: defaultValues?.method || "description",
     },
   });
 
-  const handleSubmit = (values: CodeProjectFormValues) => {
-    onSubmit(values);
+  async function handleSubmit(values: ProjectFormValues) {
+    try {
+      setIsSubmitting(true);
+      await onSubmit(values);
+      toast.success("Projeto criado com sucesso");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao criar projeto. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const renderMethodSpecificFields = () => {
+    switch (generationMethod) {
+      case "example":
+        return (
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Código de Exemplo</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Cole aqui um código de exemplo similar ao que você deseja gerar"
+                    className="font-mono text-sm min-h-[200px]"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  O código será usado como referência para gerar um novo componente similar.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+      default:
+        return (
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Descrição</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Descreva em detalhes o que o código deve fazer, incluindo funcionalidades, comportamentos esperados, etc."
+                    className="min-h-[150px]"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Quanto mais detalhada a descrição, melhor será o código gerado.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Novo Projeto de Código</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome do Projeto</FormLabel>
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className="space-y-6 w-full"
+      >
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Título</FormLabel>
+              <FormControl>
+                <Input placeholder="Título do projeto" {...field} />
+              </FormControl>
+              <FormDescription>
+                Um título claro e conciso para o projeto.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="language"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Linguagem</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
                   <FormControl>
-                    <Input placeholder="Digite um nome para o projeto" {...field} />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a linguagem" />
+                    </SelectTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição</FormLabel>
+                  <SelectContent>
+                    <SelectItem value="javascript">JavaScript</SelectItem>
+                    <SelectItem value="typescript">TypeScript</SelectItem>
+                    <SelectItem value="python">Python</SelectItem>
+                    <SelectItem value="java">Java</SelectItem>
+                    <SelectItem value="csharp">C#</SelectItem>
+                    <SelectItem value="php">PHP</SelectItem>
+                    <SelectItem value="ruby">Ruby</SelectItem>
+                    <SelectItem value="go">Go</SelectItem>
+                    <SelectItem value="rust">Rust</SelectItem>
+                    <SelectItem value="other">Outra</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  A linguagem de programação do projeto.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tipo</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
                   <FormControl>
-                    <Textarea 
-                      placeholder="Descreva o objetivo deste projeto" 
-                      className="min-h-20 resize-none"
-                      {...field} 
-                    />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo de projeto" />
+                    </SelectTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="language"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Linguagem</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a linguagem" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="javascript">JavaScript</SelectItem>
-                        <SelectItem value="typescript">TypeScript</SelectItem>
-                        <SelectItem value="python">Python</SelectItem>
-                        <SelectItem value="java">Java</SelectItem>
-                        <SelectItem value="csharp">C#</SelectItem>
-                        <SelectItem value="other">Outra</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Projeto</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o tipo" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="component">Componente</SelectItem>
-                        <SelectItem value="utility">Utilitário</SelectItem>
-                        <SelectItem value="test">Teste</SelectItem>
-                        <SelectItem value="boilerplate">Boilerplate</SelectItem>
-                        <SelectItem value="other">Outro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="generationType"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>Tipo de Geração</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex flex-col space-y-1"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="from_scratch" id="from_scratch" />
-                        <Label htmlFor="from_scratch">Criar do zero</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="from_description" id="from_description" />
-                        <Label htmlFor="from_description">Baseado em descrição</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="from_example" id="from_example" />
-                        <Label htmlFor="from_example">Baseado em exemplo</Label>
-                      </div>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="prompt"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição ou Exemplo</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Descreva o código que deseja gerar ou forneça um exemplo..."
-                      className="min-h-32 resize-none font-mono"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isLoading}
+                  <SelectContent>
+                    <SelectItem value="component">Componente</SelectItem>
+                    <SelectItem value="utility">Utilitário</SelectItem>
+                    <SelectItem value="test">Teste</SelectItem>
+                    <SelectItem value="boilerplate">Boilerplate</SelectItem>
+                    <SelectItem value="other">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  O tipo de código a ser gerado.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="method"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Método de Geração</FormLabel>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  setGenerationMethod(value as any);
+                }}
+                defaultValue={field.value}
               >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Gerando..." : "Gerar Código"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o método de geração" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="scratch">Do Zero</SelectItem>
+                  <SelectItem value="description">Baseado em Descrição</SelectItem>
+                  <SelectItem value="example">Baseado em Exemplo</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Como o código será gerado.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {renderMethodSpecificFields()}
+
+        <div className="flex justify-end space-x-4 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
+            Criar Projeto
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
