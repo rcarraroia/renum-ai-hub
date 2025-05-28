@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Bot, Mail, Lock, Loader2, AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
-import { CreateUsersButton } from '@/components/CreateUsersButton'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -66,14 +65,6 @@ export default function Login() {
               </p>
             </div>
           )}
-
-          {/* Botão temporário para criar usuários */}
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800 mb-2">
-              Primeira vez? Crie os usuários do sistema:
-            </p>
-            <CreateUsersButton />
-          </div>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
