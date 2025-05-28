@@ -1,18 +1,14 @@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Content } from "./ContentList";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,236 +23,248 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 
 const contentFormSchema = z.object({
-  title: z.string().min(3, "O título deve ter pelo menos 3 caracteres"),
-  type: z.enum(["email", "social_post", "article", "other"]),
+  title: z.string().min(3, {
+    message: "O título deve ter pelo menos 3 caracteres",
+  }),
+  description: z.string().min(10, {
+    message: "A descrição deve ter pelo menos 10 caracteres",
+  }),
+  type: z.enum(["email", "post", "article", "other"]),
   platform: z.string().optional(),
-  tone: z.string().optional(),
-  audience: z.string().optional(),
-  prompt: z.string().min(10, "A descrição deve ter pelo menos 10 caracteres"),
+  tone: z.enum(["formal", "casual", "professional", "friendly", "persuasive"]),
+  audience: z.string().min(3, {
+    message: "O público-alvo deve ter pelo menos 3 caracteres",
+  }),
 });
 
 type ContentFormValues = z.infer<typeof contentFormSchema>;
 
 interface ContentFormProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (values: ContentFormValues) => void;
-  isLoading?: boolean;
+  defaultValues?: Partial<ContentFormValues>;
+  onSubmit: (values: ContentFormValues) => Promise<void>;
+  onCancel: () => void;
 }
 
 export function ContentForm({
-  open,
-  onOpenChange,
+  defaultValues,
   onSubmit,
-  isLoading = false,
+  onCancel,
 }: ContentFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [contentType, setContentType] = useState(defaultValues?.type || "email");
+
   const form = useForm<ContentFormValues>({
     resolver: zodResolver(contentFormSchema),
     defaultValues: {
-      title: "",
-      type: "email",
-      platform: "",
-      tone: "professional",
-      audience: "",
-      prompt: "",
+      title: defaultValues?.title || "",
+      description: defaultValues?.description || "",
+      type: defaultValues?.type || "email",
+      platform: defaultValues?.platform || "",
+      tone: defaultValues?.tone || "professional",
+      audience: defaultValues?.audience || "",
     },
   });
 
-  const contentType = form.watch("type");
+  async function handleSubmit(values: ContentFormValues) {
+    try {
+      setIsSubmitting(true);
+      await onSubmit(values);
+      toast.success("Conteúdo criado com sucesso");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao criar conteúdo. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
-  const handleSubmit = (values: ContentFormValues) => {
-    onSubmit(values);
-  };
+  const renderPlatformField = () => {
+    let placeholder = "";
+    let description = "";
 
-  const getPlatformOptions = () => {
     switch (contentType) {
       case "email":
-        return [
-          { value: "gmail", label: "Gmail" },
-          { value: "outlook", label: "Outlook" },
-          { value: "other_email", label: "Outro" },
-        ];
-      case "social_post":
-        return [
-          { value: "instagram", label: "Instagram" },
-          { value: "twitter", label: "Twitter" },
-          { value: "linkedin", label: "LinkedIn" },
-          { value: "facebook", label: "Facebook" },
-          { value: "tiktok", label: "TikTok" },
-        ];
+        placeholder = "Ex: Gmail, Outlook, Campanha de Marketing";
+        description = "Plataforma ou contexto do email";
+        break;
+      case "post":
+        placeholder = "Ex: LinkedIn, Instagram, Twitter, Facebook";
+        description = "Rede social onde o post será publicado";
+        break;
       case "article":
-        return [
-          { value: "blog", label: "Blog" },
-          { value: "medium", label: "Medium" },
-          { value: "news", label: "Notícia" },
-          { value: "academic", label: "Acadêmico" },
-        ];
+        placeholder = "Ex: Blog, Medium, LinkedIn Articles";
+        description = "Plataforma onde o artigo será publicado";
+        break;
       default:
-        return [{ value: "other_platform", label: "Outro" }];
+        placeholder = "Ex: Website, Apresentação, Relatório";
+        description = "Contexto onde o conteúdo será utilizado";
     }
+
+    return (
+      <FormField
+        control={form.control}
+        name="platform"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Plataforma</FormLabel>
+            <FormControl>
+              <Input placeholder={placeholder} {...field} value={field.value || ""} />
+            </FormControl>
+            <FormDescription>{description}</FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    );
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Novo Conteúdo</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Título</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Digite um título para o conteúdo" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Conteúdo</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o tipo" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="email">E-mail</SelectItem>
-                        <SelectItem value="social_post">Post para Redes Sociais</SelectItem>
-                        <SelectItem value="article">Artigo</SelectItem>
-                        <SelectItem value="other">Outro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="platform"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Plataforma</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a plataforma" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {getPlatformOptions().map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="tone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tom</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o tom" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="professional">Profissional</SelectItem>
-                        <SelectItem value="casual">Casual</SelectItem>
-                        <SelectItem value="friendly">Amigável</SelectItem>
-                        <SelectItem value="formal">Formal</SelectItem>
-                        <SelectItem value="enthusiastic">Entusiasmado</SelectItem>
-                        <SelectItem value="humorous">Humorístico</SelectItem>
-                        <SelectItem value="serious">Sério</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="audience"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Público-alvo</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: Profissionais de TI, Estudantes, etc." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="prompt"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Descreva o conteúdo que deseja gerar em detalhes..."
-                      className="min-h-32 resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isLoading}
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className="space-y-6 w-full"
+      >
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Título</FormLabel>
+              <FormControl>
+                <Input placeholder="Título do conteúdo" {...field} />
+              </FormControl>
+              <FormDescription>
+                Um título claro e conciso para o conteúdo.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tipo de Conteúdo</FormLabel>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  setContentType(value as any);
+                }}
+                defaultValue={field.value}
               >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Gerando..." : "Gerar Conteúdo"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo de conteúdo" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="post">Post para Redes Sociais</SelectItem>
+                  <SelectItem value="article">Artigo</SelectItem>
+                  <SelectItem value="other">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                O tipo de conteúdo que você deseja criar.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {renderPlatformField()}
+
+        <FormField
+          control={form.control}
+          name="tone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tom</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tom do conteúdo" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="formal">Formal</SelectItem>
+                  <SelectItem value="professional">Profissional</SelectItem>
+                  <SelectItem value="casual">Casual</SelectItem>
+                  <SelectItem value="friendly">Amigável</SelectItem>
+                  <SelectItem value="persuasive">Persuasivo</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                O tom de voz a ser utilizado no conteúdo.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="audience"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Público-Alvo</FormLabel>
+              <FormControl>
+                <Input placeholder="Ex: Profissionais de marketing, Estudantes, Gestores" {...field} />
+              </FormControl>
+              <FormDescription>
+                Para quem este conteúdo está sendo criado.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Descrição Detalhada</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Descreva em detalhes o que você deseja incluir neste conteúdo"
+                  className="min-h-[120px]"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Detalhes sobre o conteúdo, pontos-chave, objetivos, etc.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end space-x-4 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
+            Criar Conteúdo
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
