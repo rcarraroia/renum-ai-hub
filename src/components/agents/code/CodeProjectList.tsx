@@ -1,229 +1,139 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { 
-  Code, 
-  Copy, 
-  Download, 
-  FileCode, 
-  Filter, 
-  FolderTree, 
-  MoreVertical, 
-  Play, 
-  Plus, 
-  TestTube 
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-// Tipos
-export interface CodeProject {
-  id: string;
-  name: string;
-  description: string;
-  language: "javascript" | "typescript" | "python" | "java" | "csharp" | "other";
-  type: "component" | "utility" | "test" | "boilerplate" | "other";
-  createdAt: string;
-  updatedAt: string;
-}
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Download, Trash, Code, FileCode, FolderTree } from 'lucide-react';
 
 interface CodeProjectListProps {
-  projects: CodeProject[];
-  onProjectSelect: (project: CodeProject) => void;
-  onProjectDelete: (projectId: string) => void;
-  onCreateProject: () => void;
-  isLoading?: boolean;
+  projects: any[];
+  onView: (id: string) => void;
+  onExport: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-export function CodeProjectList({
-  projects,
-  onProjectSelect,
-  onProjectDelete,
-  onCreateProject,
-  isLoading = false,
-}: CodeProjectListProps) {
-  const [filter, setFilter] = useState<CodeProject["type"] | "all">("all");
-
-  const filteredProjects = filter === "all" 
-    ? projects 
-    : projects.filter(project => project.type === filter);
-
-  const getLanguageIcon = (language: CodeProject["language"]) => {
-    return <Code className="h-4 w-4" />;
-  };
-
-  const getLanguageLabel = (language: CodeProject["language"]) => {
-    switch (language) {
-      case "javascript": return "JavaScript";
-      case "typescript": return "TypeScript";
-      case "python": return "Python";
-      case "java": return "Java";
-      case "csharp": return "C#";
-      default: return "Outro";
+export function CodeProjectList({ projects, onView, onExport, onDelete }: CodeProjectListProps) {
+  const getLanguageColor = (language: string) => {
+    switch (language.toLowerCase()) {
+      case 'javascript':
+      case 'js':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      case 'typescript':
+      case 'ts':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'python':
+      case 'py':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'java':
+        return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300';
+      case 'c#':
+      case 'csharp':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
+      case 'php':
+        return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300';
+      case 'ruby':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      case 'go':
+        return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300';
+      case 'rust':
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
   };
 
-  const getTypeLabel = (type: CodeProject["type"]) => {
-    switch (type) {
-      case "component": return "Componente";
-      case "utility": return "Utilitário";
-      case "test": return "Teste";
-      case "boilerplate": return "Boilerplate";
-      default: return "Outro";
+  const getTypeIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'component':
+        return <FileCode className='h-4 w-4 mr-1' />;
+      case 'utility':
+        return <Code className='h-4 w-4 mr-1' />;
+      case 'test':
+        return <Code className='h-4 w-4 mr-1' />;
+      case 'boilerplate':
+        return <FolderTree className='h-4 w-4 mr-1' />;
+      default:
+        return <FileCode className='h-4 w-4 mr-1' />;
     }
   };
 
-  const getLanguageColor = (language: CodeProject["language"]) => {
-    switch (language) {
-      case "javascript": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-      case "typescript": return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-      case "python": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-      case "java": return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-      case "csharp": return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
-      default: return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
-    }
-  };
+  if (projects.length === 0) {
+    return (
+      <div className='flex flex-col items-center justify-center p-8 text-center'>
+        <div className='rounded-full bg-muted p-3'>
+          <Code className='h-6 w-6' />
+        </div>
+        <h3 className='mt-4 text-lg font-semibold'>Nenhum projeto encontrado</h3>
+        <p className='mt-2 text-sm text-muted-foreground'>
+          Comece criando um novo projeto ou importando código existente.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-xl">Projetos de Código</CardTitle>
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                {filter === "all" ? "Todos os tipos" : getTypeLabel(filter)}
+    <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+      {projects.map((project) => (
+        <Card key={project.id} className='overflow-hidden'>
+          <CardHeader className='pb-2'>
+            <div className='flex justify-between'>
+              <CardTitle className='line-clamp-1 text-base'>{project.title}</CardTitle>
+              <Badge className={getLanguageColor(project.language)}>
+                {project.language}
+              </Badge>
+            </div>
+            <CardDescription className='line-clamp-2'>{project.description}</CardDescription>
+          </CardHeader>
+          <CardContent className='pb-2'>
+            <div className='flex flex-wrap gap-2 mb-2'>
+              {project.type && (
+                <Badge variant='outline' className='flex items-center'>
+                  {getTypeIcon(project.type)}
+                  {project.type}
+                </Badge>
+              )}
+              {project.files && (
+                <Badge variant='outline'>
+                  {project.files} arquivos
+                </Badge>
+              )}
+              {project.loc && (
+                <Badge variant='outline'>
+                  {project.loc} linhas
+                </Badge>
+              )}
+            </div>
+            <div className='mt-2 line-clamp-3 text-sm text-muted-foreground'>
+              {project.preview || 'Sem prévia disponível'}
+            </div>
+          </CardContent>
+          <CardFooter className='flex justify-between pt-2'>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => onView(project.id)}
+            >
+              Visualizar
+            </Button>
+            <div className='flex space-x-2'>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => onExport(project.id)}
+              >
+                <Download className='h-4 w-4' />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setFilter("all")}>
-                Todos os tipos
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter("component")}>
-                Componentes
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter("utility")}>
-                Utilitários
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter("test")}>
-                Testes
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter("boilerplate")}>
-                Boilerplate
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter("other")}>
-                Outros
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button size="sm" onClick={onCreateProject}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Projeto
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-            <span className="ml-2">Carregando projetos...</span>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredProjects.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Nenhum projeto encontrado
-              </div>
-            ) : (
-              filteredProjects.map((project) => (
-                <div
-                  key={project.id}
-                  className="flex items-start gap-4 p-4 border rounded-lg hover:bg-accent/10 transition-colors cursor-pointer"
-                  onClick={() => onProjectSelect(project)}
-                >
-                  <div className="p-2 bg-primary/10 rounded-md">
-                    {getLanguageIcon(project.language)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-medium truncate">
-                        {project.name}
-                      </h3>
-                      <Badge className={getLanguageColor(project.language)}>
-                        {getLanguageLabel(project.language)}
-                      </Badge>
-                      <Badge variant="outline">
-                        {getTypeLabel(project.type)}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {project.description}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                      <span>Criado em: {new Date(project.createdAt).toLocaleDateString()}</span>
-                      <span>•</span>
-                      <span>Atualizado em: {new Date(project.updatedAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                        <span className="sr-only">Ações</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={(e) => {
-                        e.stopPropagation();
-                        onProjectSelect(project);
-                      }}>
-                        <FileCode className="h-4 w-4 mr-2" />
-                        Editar Código
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => {
-                        e.stopPropagation();
-                        // Implementar visualização de estrutura
-                      }}>
-                        <FolderTree className="h-4 w-4 mr-2" />
-                        Ver Estrutura
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => {
-                        e.stopPropagation();
-                        // Implementar geração de testes
-                      }}>
-                        <TestTube className="h-4 w-4 mr-2" />
-                        Gerar Testes
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => {
-                        e.stopPropagation();
-                        // Implementar exportação
-                      }}>
-                        <Download className="h-4 w-4 mr-2" />
-                        Exportar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="text-destructive focus:text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onProjectDelete(project.id);
-                        }}
-                      >
-                        Excluir
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='text-red-600 hover:text-red-700 hover:bg-red-100'
+                onClick={() => onDelete(project.id)}
+              >
+                <Trash className='h-4 w-4' />
+              </Button>
+            </div>
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
   );
 }
