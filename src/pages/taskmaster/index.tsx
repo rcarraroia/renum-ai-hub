@@ -28,20 +28,42 @@ const TaskMasterPage: React.FC = () => {
               Gerenciador de Tarefas IA
             </h3>
             <PromptInput
-              onSendPrompt={sendPrompt}
+              onSubmit={sendPrompt}
               placeholder="Descreva as tarefas que você precisa organizar..."
-              disabled={isLoading}
+              isLoading={isLoading}
             />
           </div>
-          <TaskList />
+          <TaskList 
+            tasks={[]}
+            onStatusChange={() => {}}
+            onEdit={() => {}}
+            onDelete={() => {}}
+          />
         </div>
         
         <div className="space-y-6">
-          <ResponseDisplay
-            responses={responses}
-            isLoading={isLoading}
-            placeholder="As sugestões de organização aparecerão aqui..."
-          />
+          {responses.map((response) => (
+            <ResponseDisplay
+              key={response.id}
+              content={response.content}
+              timestamp={response.timestamp}
+              type={response.type}
+              isLoading={false}
+            />
+          ))}
+          {isLoading && (
+            <ResponseDisplay
+              content=""
+              isLoading={true}
+            />
+          )}
+          {responses.length === 0 && !isLoading && (
+            <div className="flex items-center justify-center p-8 text-center">
+              <p className="text-muted-foreground">
+                As sugestões de organização aparecerão aqui...
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </AgentLayout>

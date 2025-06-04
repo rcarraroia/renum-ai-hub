@@ -28,20 +28,43 @@ const ContentCreatorPage: React.FC = () => {
               Criador de Conteúdo IA
             </h3>
             <PromptInput
-              onSendPrompt={sendPrompt}
+              onSubmit={sendPrompt}
               placeholder="Descreva o tipo de conteúdo que você precisa criar..."
-              disabled={isLoading}
+              isLoading={isLoading}
             />
           </div>
-          <ContentList />
+          <ContentList 
+            contents={[]}
+            onFavorite={() => {}}
+            onShare={() => {}}
+            onCopy={() => {}}
+            onDelete={() => {}}
+          />
         </div>
         
         <div className="space-y-6">
-          <ResponseDisplay
-            responses={responses}
-            isLoading={isLoading}
-            placeholder="O conteúdo gerado aparecerá aqui..."
-          />
+          {responses.map((response) => (
+            <ResponseDisplay
+              key={response.id}
+              content={response.content}
+              timestamp={response.timestamp}
+              title={response.title}
+              isLoading={false}
+            />
+          ))}
+          {isLoading && (
+            <ResponseDisplay
+              content=""
+              isLoading={true}
+            />
+          )}
+          {responses.length === 0 && !isLoading && (
+            <div className="flex items-center justify-center p-8 text-center">
+              <p className="text-muted-foreground">
+                O conteúdo gerado aparecerá aqui...
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </AgentLayout>

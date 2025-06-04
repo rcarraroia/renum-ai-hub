@@ -28,20 +28,42 @@ const DataAnalystPage: React.FC = () => {
               Analista de Dados IA
             </h3>
             <PromptInput
-              onSendPrompt={sendPrompt}
+              onSubmit={sendPrompt}
               placeholder="Descreva os dados que você precisa analisar..."
-              disabled={isLoading}
+              isLoading={isLoading}
             />
           </div>
-          <DatasetList />
+          <DatasetList 
+            datasets={[]}
+            onView={() => {}}
+            onExport={() => {}}
+            onDelete={() => {}}
+          />
         </div>
         
         <div className="space-y-6">
-          <ResponseDisplay
-            responses={responses}
-            isLoading={isLoading}
-            placeholder="As análises e insights aparecerão aqui..."
-          />
+          {responses.map((response) => (
+            <ResponseDisplay
+              key={response.id}
+              content={response.content}
+              timestamp={response.timestamp}
+              type={response.type}
+              isLoading={false}
+            />
+          ))}
+          {isLoading && (
+            <ResponseDisplay
+              content=""
+              isLoading={true}
+            />
+          )}
+          {responses.length === 0 && !isLoading && (
+            <div className="flex items-center justify-center p-8 text-center">
+              <p className="text-muted-foreground">
+                As análises e insights aparecerão aqui...
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </AgentLayout>
