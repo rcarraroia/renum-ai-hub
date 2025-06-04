@@ -1,6 +1,6 @@
 
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Dashboard from "@/pages/dashboard";
+import Index from "@/pages/Index";
 import TaskMasterPage from "@/pages/taskmaster";
 import ContentCreatorPage from "@/pages/content";
 import DataAnalystPage from "@/pages/data";
@@ -17,7 +17,7 @@ import SettingsPage from "@/pages/settings";
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Dashboard />,
+    element: <Index />,
   },
   {
     path: "/taskmaster",
