@@ -11,35 +11,35 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Bot, Home, Settings, FolderOpen, Activity, LogOut } from "lucide-react";
+import { Bot, Home, Settings, FolderOpen, Activity, LogOut, Users, Play } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 const menuItems = [
   {
     title: "Dashboard",
-    url: "#",
+    url: "/",
     icon: Home,
     active: true,
   },
   {
     title: "Meus Agentes",
-    url: "#",
+    url: "/agent-builder",
     icon: Bot,
   },
   {
     title: "Meus Projetos",
-    url: "#",
+    url: "/projects",
     icon: FolderOpen,
   },
   {
-    title: "Atividades",
-    url: "#",
-    icon: Activity,
+    title: "Execuções/Testes",
+    url: "/executions",
+    icon: Play,
   },
   {
     title: "Configurações",
-    url: "#",
+    url: "/settings",
     icon: Settings,
   },
 ];

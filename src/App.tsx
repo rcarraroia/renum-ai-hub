@@ -10,6 +10,9 @@ import CreateAgentPage from "@/pages/agent-builder/create";
 import EditAgentPage from "@/pages/agent-builder/edit";
 import RunAgentPage from "@/pages/agent-builder/run";
 import LogsAgentPage from "@/pages/agent-builder/logs";
+import ProjectsPage from "@/pages/projects";
+import ExecutionsPage from "@/pages/executions";
+import SettingsPage from "@/pages/settings";
 
 const router = createBrowserRouter([
   {
@@ -51,6 +54,18 @@ const router = createBrowserRouter([
   {
     path: "/agent-builder/logs/:agentId",
     element: <LogsAgentPage />,
+  },
+  {
+    path: "/projects",
+    element: <ProjectsPage />,
+  },
+  {
+    path: "/executions",
+    element: <ExecutionsPage />,
+  },
+  {
+    path: "/settings",
+    element: <SettingsPage />,
   },
 ]);
 
