@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-export interface Agent {
+export interface LegacyAgent {
   id: string;
   name: string;
   type: string;
@@ -21,18 +21,18 @@ export function useAgents() {
   const { user } = useAuth();
 
   const { data: agents = [], isLoading, error } = useQuery({
-    queryKey: ['agents', user?.id],
+    queryKey: ['legacy-agents', user?.id],
     queryFn: async () => {
       if (!user) return [];
       
       const { data, error } = await supabase
-        .from('agents')
+        .from('agents_legacy')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Agent[];
+      return data as LegacyAgent[];
     },
     enabled: !!user,
   });
@@ -40,11 +40,11 @@ export function useAgents() {
   const queryClient = useQueryClient();
 
   const createAgent = useMutation({
-    mutationFn: async (agentData: Omit<Agent, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (agentData: Omit<LegacyAgent, 'id' | 'created_at' | 'updated_at'>) => {
       if (!user) throw new Error('User not authenticated');
       
       const { data, error } = await supabase
-        .from('agents')
+        .from('agents_legacy')
         .insert([{ ...agentData, user_id: user.id }])
         .select()
         .single();
@@ -53,14 +53,14 @@ export function useAgents() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['agents'] });
+      queryClient.invalidateQueries({ queryKey: ['legacy-agents'] });
     },
   });
 
   const updateAgent = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Agent> & { id: string }) => {
+    mutationFn: async ({ id, ...updates }: Partial<LegacyAgent> & { id: string }) => {
       const { data, error } = await supabase
-        .from('agents')
+        .from('agents_legacy')
         .update(updates)
         .eq('id', id)
         .select()
@@ -70,21 +70,21 @@ export function useAgents() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['agents'] });
+      queryClient.invalidateQueries({ queryKey: ['legacy-agents'] });
     },
   });
 
   const deleteAgent = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('agents')
+        .from('agents_legacy')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['agents'] });
+      queryClient.invalidateQueries({ queryKey: ['legacy-agents'] });
     },
   });
 

@@ -54,7 +54,15 @@ const CreateAgentPage: React.FC = () => {
   const onSubmit = async (data: AgentFormData) => {
     try {
       await createAgent.mutateAsync({
-        ...data,
+        name: data.name,
+        description: data.description,
+        persona: data.persona,
+        tone_of_voice: data.tone_of_voice,
+        behavioral_guidelines: data.behavioral_guidelines,
+        tools: data.tools || [],
+        knowledge_documents: data.knowledge_documents || [],
+        credentials_id: data.credentials_id,
+        status: data.status,
         project_id: projectId,
       });
       
