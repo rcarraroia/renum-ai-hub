@@ -11,8 +11,9 @@ export function useProjectId() {
     setProjectId(defaultProjectId);
   }, []);
 
-  return {
-    projectId,
-    setProjectId,
-  };
+  return projectId;
+}
+
+export function getCurrentProjectId() {
+  return localStorage.getItem('current_project_id') || 'project-1';
 }

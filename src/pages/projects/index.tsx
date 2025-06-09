@@ -69,7 +69,7 @@ const ProjectsPage: React.FC = () => {
           <h1 className="text-3xl font-bold">Meus Projetos</h1>
           <p className="text-gray-500 mt-2">Gerencie todos os seus projetos de desenvolvimento com agentes IA</p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90">
+        <Button className="bg-primary hover:bg-primary/90" onClick={() => navigate('/projects/create')}>
           <Plus className="mr-2 h-4 w-4" /> Criar Novo Projeto
         </Button>
       </div>

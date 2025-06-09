@@ -1,92 +1,77 @@
-# Documentação do Frontend do Renum AI Hub
+# Documentação do Projeto Renum AI Hub
 
-## Visão Geral
+## 1. Introdução
+Este documento tem como objetivo descrever a estrutura, funcionalidades e arquitetura do projeto Renum AI Hub, uma plataforma para criação e gerenciamento de agentes de IA que podem ser integrados a outros sistemas, aplicativos e sites. A documentação inclui diagramas Mermaid para facilitar a visualização da arquitetura e dos principais módulos.
 
-O Renum AI Hub é uma plataforma central para acesso a diferentes agentes de IA, cada um especializado em uma função específica. O frontend foi desenvolvido utilizando React com TypeScript, Tailwind CSS e Shadcn/UI para componentes, seguindo uma abordagem incremental e modular.
+## 2. Visão Geral do Projeto
+O Renum AI Hub é uma plataforma que permite aos usuários criar seus próprios agentes de IA, conectá-los a outras ferramentas e integrá-los a sistemas externos. O backend é baseado em Supabase, que oferece APIs RESTful, funções serverless e suporte a webhooks para facilitar a integração.
 
-## Estrutura do Projeto
+## 3. Arquitetura do Sistema
 
-```
-src/
-├── components/
-│   ├── agents/
-│   │   ├── code/           # Componentes específicos do CodeSupportAgent
-│   │   ├── content/        # Componentes específicos do ContentCreatorAgent
-│   │   ├── data/           # Componentes específicos do DataAnalystAgent
-│   │   └── taskmaster/     # Componentes específicos do RenumTaskMaster
-│   ├── shared/             # Componentes compartilhados entre agentes
-│   └── ui/                 # Componentes de UI básicos (Shadcn/UI)
-├── hooks/                  # Hooks customizados
-├── lib/                    # Utilitários e integrações
-│   └── api/                # Integrações com API
-├── pages/                  # Páginas da aplicação
-└── App.tsx                 # Componente principal
+```mermaid
+graph TD
+  A[Frontend React] --> B[Hooks e Contextos]
+  A --> C[Componentes UI]
+  A --> D[Páginas]
+  A --> E[Integrações Supabase]
+  E --> F[Funções Supabase]
+  E --> G[Configuração Supabase]
+  A --> H[Utilitários e APIs]
 ```
 
-## Agentes Implementados
+## 4. Principais Módulos e Relações
 
-### 1. RenumTaskMaster
-- Gerenciamento de tarefas
-- Visualizações em lista e kanban
-- Criação e edição de tarefas
-- Filtros por status e prioridade
+```mermaid
+graph LR
+  Components -->|usa| Hooks
+  Hooks -->|chama| API
+  Pages -->|renderiza| Components
+  Pages -->|usa| Hooks
+  Integrations -->|fornece dados para| API
+  Supabase -->|backend| Functions
+```
 
-### 2. ContentCreatorAgent
-- Geração de conteúdo (e-mails, posts, artigos)
-- Biblioteca de conteúdos
-- Seleção de tipo, plataforma e tom
-- Visualização e exportação
+## 5. Fluxo de Autenticação
 
-### 3. DataAnalystAgent
-- Análise de dados estruturados
-- Visualizações e gráficos
-- Insights e recomendações
-- Exportação de resultados
+```mermaid
+sequenceDiagram
+  User->>Frontend: Login
+  Frontend->>Supabase: Verifica credenciais
+  Supabase-->>Frontend: Token de autenticação
+  Frontend->>User: Acesso concedido
+```
 
-### 4. CodeSupportAgent
-- Geração de código
-- Editor com syntax highlighting
-- Visualização de estrutura de arquivos
-- Suporte a múltiplas linguagens
+## 6. Plano de Integração dos Agentes com Sistemas Externos
 
-## Hooks Utilitários
+### 6.1 Contexto do Backend
+O backend do Renum AI Hub é baseado em Supabase, que oferece APIs RESTful automáticas para acesso ao banco de dados, funções serverless para lógica customizada e suporte a webhooks para eventos.
 
-- `useTheme`: Gerenciamento de tema (claro/escuro/sistema)
-- `useScrollReset`: Reset de scroll ao navegar entre páginas
-- `useMediaQuery`: Detecção responsiva de breakpoints
-- `useLocalStorage`: Persistência de dados no localStorage
-- `useCopyToClipboard`: Cópia de texto para área de transferência
-- `useDebounce`: Debounce para inputs e pesquisas
-- `useKeyPress`: Detecção de teclas pressionadas
-- `useOnlineStatus`: Verificação de status de conexão
+### 6.2 Abordagem Recomendada para Integração
+- **APIs RESTful:** Expor endpoints para operações síncronas, como criação, atualização, consulta e controle dos agentes. Isso permite que sistemas externos consumam diretamente os recursos da plataforma.
+- **Webhooks:** Configurar webhooks para eventos assíncronos importantes, como criação de agentes, execução de tarefas ou alterações de estado, notificando sistemas externos em tempo real.
+- **Funções Serverless:** Utilizar funções serverless (Edge Functions) para implementar lógica intermediária, validações, transformações de dados e orquestração de chamadas entre APIs e webhooks.
 
-## Integração com Backend
+### 6.3 Vantagens dessa Abordagem
+- Flexibilidade para diferentes casos de uso, podendo escolher entre chamadas síncronas (API) e assíncronas (webhooks).
+- Independência de plataformas externas, mantendo controle total sobre a integração.
+- Escalabilidade e facilidade de manutenção usando recursos nativos do Supabase.
 
-Cada agente se comunica com o backend através de endpoints específicos:
-- `/api/taskmaster`: Gerenciamento de tarefas
-- `/api/content`: Geração e gerenciamento de conteúdo
-- `/api/data`: Análise de dados
-- `/api/code`: Geração e gerenciamento de código
+### 6.4 Próximos Passos para Implementação
+- Definir os endpoints RESTful necessários para gerenciamento dos agentes.
+- Implementar e documentar os webhooks disponíveis e seus eventos.
+- Criar funções serverless para casos específicos de integração e orquestração.
+- Documentar exemplos de uso para desenvolvedores que integrarão seus sistemas.
 
-Em ambiente de desenvolvimento, são utilizados dados simulados para facilitar o desenvolvimento e testes.
+## 7. Guia para Desenvolvimento e Contribuição
+- Seguir padrões de código estabelecidos no projeto.
+- Utilizar hooks e contextos para gerenciamento de estado.
+- Documentar novas funcionalidades e atualizações.
+- Testar integrações e fluxos antes de submeter pull requests.
 
-## Considerações de Performance
+## 8. Referências e Links Úteis
+- [Supabase Documentation](https://supabase.com/docs)
+- [React Documentation](https://reactjs.org/docs/getting-started.html)
+- [Mermaid Live Editor](https://mermaid.live/)
 
-- Memoização de componentes com React.memo
-- Lazy loading de páginas e componentes pesados
-- Debounce em inputs de pesquisa
-- Otimização de re-renderizações
-
-## Acessibilidade
-
-- Suporte a navegação por teclado
-- Contraste adequado para texto e elementos interativos
-- Labels e descrições para leitores de tela
-- Feedback visual para estados de interação
-
-## Próximos Passos
-
-- Implementação de testes automatizados (unitários e e2e)
-- Integração com sistema de autenticação
-- Expansão para novos agentes especializados
-- Melhorias de performance para grandes conjuntos de dados
+---
+Documentação gerada automaticamente para facilitar o entendimento e desenvolvimento do Renum AI Hub.

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -65,29 +64,35 @@ export function useAgentBuilder(projectId?: string) {
 
   // Lista ferramentas
   const { data: tools = [], isLoading: toolsLoading } = useQuery({
-    queryKey: ['tools'],
+    queryKey: ['tools', projectId],
     queryFn: async () => {
-      const response = await axios.get(`${API_BASE_URL}/agent-builder/tools`);
+      if (!projectId) return [];
+      const response = await axios.get(`${API_BASE_URL}/agent-builder/tools?project_id=${projectId}`);
       return response.data as Tool[];
     },
+    enabled: !!projectId,
   });
 
   // Lista documentos de conhecimento
   const { data: knowledgeDocuments = [], isLoading: documentsLoading } = useQuery({
-    queryKey: ['knowledge-documents'],
+    queryKey: ['knowledge-documents', projectId],
     queryFn: async () => {
-      const response = await axios.get(`${API_BASE_URL}/agent-builder/knowledge-documents`);
+      if (!projectId) return [];
+      const response = await axios.get(`${API_BASE_URL}/agent-builder/knowledge-documents?project_id=${projectId}`);
       return response.data as KnowledgeDocument[];
     },
+    enabled: !!projectId,
   });
 
   // Lista credenciais
   const { data: credentials = [], isLoading: credentialsLoading } = useQuery({
-    queryKey: ['credentials'],
+    queryKey: ['credentials', projectId],
     queryFn: async () => {
-      const response = await axios.get(`${API_BASE_URL}/agent-builder/credentials`);
+      if (!projectId) return [];
+      const response = await axios.get(`${API_BASE_URL}/agent-builder/credentials?project_id=${projectId}`);
       return response.data as Credential[];
     },
+    enabled: !!projectId,
   });
 
   // Criar agente
